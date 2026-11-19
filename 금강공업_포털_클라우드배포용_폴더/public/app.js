@@ -1011,7 +1011,7 @@ function renderPendingUsersTable() {
   if (!tbody) return;
 
   if (pendingUsers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">현재 신규 가입 신청 대기 중인 거래처가 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">현재 신규 가입 신청 대기 중인 거래처가 없습니다.</td></tr>`;
     return;
   }
 
@@ -1019,6 +1019,7 @@ function renderPendingUsersTable() {
     <tr class="hover:bg-amber-50/40 transition">
       <td class="px-3 py-2.5 font-bold text-blue-800">${u.login_id}</td>
       <td class="px-3 py-2.5 font-bold text-slate-900">${u.department}</td>
+      <td class="px-3 py-2.5 font-mono text-slate-700 font-medium">${u.business_number || '-'}</td>
       <td class="px-3 py-2.5">${u.name}</td>
       <td class="px-3 py-2.5">
         <div class="font-medium text-slate-700">${u.contact || '-'}</div>
@@ -1083,7 +1084,10 @@ function renderUsersTable() {
         <div class="font-bold text-slate-800">${user.name}</div>
         <div class="text-[10px] text-slate-400">${user.position || '-'}</div>
       </td>
-      <td class="px-3 py-2.5 text-slate-600">${user.department}</td>
+      <td class="px-3 py-2.5 text-slate-600">
+        <div class="font-medium text-slate-800">${user.department}</div>
+        ${user.business_number ? `<div class="text-[10px] text-slate-400 font-mono">사업자: ${user.business_number}</div>` : ''}
+      </td>
       <td class="px-3 py-2.5 text-slate-500 font-mono text-[11px]">${user.login_id}</td>
       <td class="px-3 py-2.5">
         <span class="inline-block border border-rose-400 text-rose-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
