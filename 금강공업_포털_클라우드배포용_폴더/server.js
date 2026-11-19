@@ -106,7 +106,7 @@ const server = http.createServer(async (req, res) => {
   // 거래처 회원가입 신청 (POST /api/auth/register)
   if (method === 'POST' && pathname === '/api/auth/register') {
     try {
-      const { loginId, password, companyName, managerName, contact, email } = await parseBody(req);
+      const { loginId, password, companyName, managerName, contact, email, businessNumber } = await parseBody(req);
       if (!loginId || !password || !companyName || !managerName) {
         return sendJSON(res, 400, { error: '아이디, 비밀번호, 거래처명, 담당자명은 필수 입력 항목입니다.' });
       }
@@ -122,7 +122,8 @@ const server = http.createServer(async (req, res) => {
         companyName,
         managerName,
         contact,
-        email
+        email,
+        businessNumber
       });
 
       return sendJSON(res, 201, {
@@ -178,6 +179,7 @@ const server = http.createServer(async (req, res) => {
         position: user.position,
         role: user.role,
         clientCode: user.client_code,
+        businessNumber: user.business_number,
         stampText: user.stamp_text,
         status: user.status
       };

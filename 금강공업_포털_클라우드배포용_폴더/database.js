@@ -30,6 +30,7 @@ function initDatabase() {
       position TEXT,
       email TEXT,
       contact TEXT,
+      business_number TEXT,
       role TEXT NOT NULL DEFAULT 'client',
       client_code TEXT,
       stamp_text TEXT,
@@ -111,6 +112,9 @@ function initDatabase() {
     db.exec(`ALTER TABLE users ADD COLUMN contact TEXT`);
   } catch(e) {}
   try {
+    db.exec(`ALTER TABLE users ADD COLUMN business_number TEXT`);
+  } catch(e) {}
+  try {
     db.exec(`ALTER TABLE users ADD COLUMN approved_by TEXT`);
   } catch(e) {}
   try {
@@ -122,8 +126,8 @@ function initDatabase() {
 
   // 기본 거래처 계정 역할 강제 보정 (서울철강, 한양스틸은 거래처 client 역할)
   try {
-    db.exec(`UPDATE users SET role = 'client', client_code = 'KC-10294' WHERE login_id = 'KC-10294'`);
-    db.exec(`UPDATE users SET role = 'client', client_code = 'KC-20831' WHERE login_id = 'KC-20831'`);
+    db.exec(`UPDATE users SET role = 'client', client_code = 'KC-10294', business_number = '120-81-12345' WHERE login_id = 'KC-10294'`);
+    db.exec(`UPDATE users SET role = 'client', client_code = 'KC-20831', business_number = '214-82-67890' WHERE login_id = 'KC-20831'`);
     db.exec(`UPDATE users SET role = 'admin' WHERE login_id = 'admin'`);
   } catch(e) {}
 
@@ -233,18 +237,18 @@ module.exports = {
     return db.prepare('SELECT * FROM users WHERE login_id = ?').get(loginId);
   },
   getUserById(id) {
-    return db.prepare('SELECT id, login_id, name, department, position, email, contact, role, client_code, stamp_text, status, approved_by, approved_at, created_at FROM users WHERE id = ?').get(id);
+    return db.prepare('SELECT id, login_id, name, department, position, email, contact, business_number, role, client_code, stamp_text, status, approved_by, approved_at, created_at FROM users WHERE id = ?').get(id);
   },
   getAllUsers() {
     return db.prepare(`
-      SELECT id, login_id, name, department, position, email, contact, role, client_code, stamp_text, status, approved_by, approved_at, created_at 
+      SELECT id, login_id, name, department, position, email, contact, business_number, role, client_code, stamp_text, status, approved_by, approved_at, created_at 
       FROM users 
       ORDER BY status DESC, created_at DESC
     `).all();
   },
   getPendingUsers() {
     return db.prepare(`
-      SELECT id, login_id, name, department, position, email, contact, role, client_code, created_at 
+      SELECT id, login_id, name, department, position, email, contact, business_number, role, client_code, created_at 
       FROM users 
       WHERE status = 'pending'
       ORDER BY created_at ASC
@@ -257,8 +261,8 @@ module.exports = {
     const now = new Date().toISOString();
 
     const stmt = db.prepare(`
-      INSERT INTO users (id, login_id, password_hash, name, department, position, email, contact, role, client_code, stamp_text, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'client', ?, ?, 'pending', ?)
+      INSERT INTO users (id, login_id, password_hash, name, department, position, email, contact, business_number, role, client_code, stamp_text, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'client', ?, ?, 'pending', ?)
     `);
 
     stmt.run(
@@ -270,6 +274,7 @@ module.exports = {
       data.position || '담당자',
       data.email || null,
       data.contact || null,
+      data.businessNumber || null,
       data.loginId, // 기본 거래처코드를 아이디로 매칭
       data.managerName || data.name,
       now
@@ -281,12 +286,13 @@ module.exports = {
   // 관리자 직접 사용자 생성
   createUser(user) {
     const stmt = db.prepare(`
-      INSERT INTO users (id, login_id, password_hash, name, department, position, email, contact, role, client_code, stamp_text, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?)
+      INSERT INTO users (id, login_id, password_hash, name, department, position, email, contact, business_number, role, client_code, stamp_text, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?)
     `);
     stmt.run(
       user.id, user.login_id, user.password_hash, user.name, user.department,
-      user.position || null, user.email || null, user.contact || null, user.role, user.client_code || null,
+      user.position || null, user.email || null, user.contact || null, user.business_number || null,
+      user.role, user.client_code || null,
       user.stamp_text || user.name, user.created_at
     );
     return this.getUserById(user.id);
@@ -328,7 +334,7 @@ module.exports = {
   },
   getSession(token) {
     return db.prepare(`
-      SELECT s.token, s.expires_at, u.id as user_id, u.login_id, u.name, u.department, u.position, u.role, u.client_code, u.stamp_text, u.status
+      SELECT s.token, s.expires_at, u.id as user_id, u.login_id, u.name, u.department, u.position, u.role, u.client_code, u.stamp_text, u.status, u.business_number
       FROM sessions s
       JOIN users u ON s.user_id = u.id
       WHERE s.token = ?
